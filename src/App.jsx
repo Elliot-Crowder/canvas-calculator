@@ -3,7 +3,7 @@ import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
 import "./App.css";
 import "./cartesianStyles.css";
-import { mapYCoordToPx, mapXCoordToPX, mapPointToPixels } from "./utils/draw";
+import { mapYCoordToPx, mapXCoordToPx, mapPointToPixels } from "./utils/draw";
 
 function App() {
 	const [xmin, setxmin] = useState("-10");
@@ -131,7 +131,7 @@ function CartesianGrid({ xmin, xmax, ymin, ymax }) {
 		draw.fillStyle = "black";
 		draw.font = "18px";
 		// drawGridLine({ x: 10, y: 0 }, { x: 50, y: 50 });
-		drawGrid(graphHeight, graphWidth);
+		// drawGrid(graphHeight, graphWidth);
 		drawAxes(xmin, xmax, ymin, ymax, graphHeight, graphWidth);
 	}, []);
 
