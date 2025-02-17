@@ -1,3 +1,7 @@
 .cartesian-canvas {
   border: 1px solid black;
 }
+
+/* .cartesian-canvas:hover {
+  border: 2px solid green;
+} */
