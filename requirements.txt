@@ -1,3 +1,10 @@
 1.) x and y axis : graph range via user input
 2.) Panning and zooming with touch handlers
 3.) graphing functions on canvas
+
+bugs
+1.) curerntly because the graph updates whenever the text changes
+in the inputs, there is a problem where if there is nothing in the input
+field the entire application breaks so ideally the graph
+should only update if you submit or press some sort of button
+that confirms your x and y ranges.
