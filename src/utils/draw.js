@@ -3,23 +3,56 @@ import { evaluateExpression } from "./parsing/functionParse.js";
 //xMin is the minimum x value/range of x values, and xMax is the domain of
 //the function
 //ths should be in draw, other functons need to be moved to another util file
-export function plotFunction(points, ctx) {
+export function plotFunction(points, winWidth, winHeight, ctx) {
+	if (points.length === 0) {
+		return;
+	}
 	ctx.beginPath();
 	const sortedPoints = points.sort((a, b) => a.xPxCoord - b.xPxCoord);
+
+	let isPrevOutOfBounds = false; //flag for discontinuous points
+
 	ctx.moveTo(sortedPoints[0].xPxCoord, sortedPoints[0].yPxCoord);
 	for (const point of sortedPoints) {
-		ctx.lineTo(point.xPxCoord, point.yPxCoord);
+		if (point.yPxCoord < 0 || point.yPxCoord > winHeight) {
+			isPrevOutOfBounds = true;
+			continue;
+		} else {
+			if (isPrevOutOfBounds) {
+				ctx.moveTo(point.xPxCoord, point.yPxCoord);
+				isPrevOutOfBounds = false;
+			} else {
+				ctx.lineTo(point.xPxCoord, point.yPxCoord);
+			}
+		}
 	}
 	ctx.stroke();
 }
-export function generatePoints(expr, xmax, xmin, ymax, ymin, res = 0.25) {
+export function generatePoints(expr, xmax, xmin, ymax, ymin, res = 0.01) {
+	if (!expr) {
+		return [];
+	}
+
+	const maxPoints = 5000;
+	// res = (xmax - xmin) / 200;
+	res = Math.max(res, (xmax - xmin) / maxPoints);
 	let points = new Set([]);
-	for (let x = xmin; x < xmax; x += res) {
+	// let prevInBounds = false;
+	// let prevPoint = null;
+
+	for (let x = xmin; x <= xmax; x += res) {
 		let y = evaluateExpression(expr, "x", x).y;
-		if (y >= ymin && y <= ymax) {
-			// Ensure y is within bounds
-			points.add({ x, y });
-		}
+		// let inBounds = y >= ymin && y <= ymax;
+
+		// if (inBounds) {
+		// 	if (prevInBounds && prevPoint) {
+		// 		continue;
+		// 	}
+		// }
+		// if (y >= ymin && y <= ymax) {
+		// Ensure y is within bounds
+		points.add({ x, y });
+		// }
 	}
 	return points;
 }

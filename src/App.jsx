@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-
+import * as math from "mathjs";
 import "./App.css";
 import "./cartesianStyles.css";
 import {
@@ -8,44 +8,142 @@ import {
 	generatePoints,
 	mapPointsToPixels,
 } from "./utils/draw";
+// function isValidExpression(expression) {
+// 	const variablePattern = /(?:^|[^a-zA-Z])[a-wyz](?:$|[^a-zA-Z])/i;
 
+// 	// Regular expression to match invalid function usage:
+// 	// 1. Partial function names like 'ta', 'co', 'cos' without a following '('
+// 	// 2. Full function names like 'tan', 'sin', 'cos' without a following '('
+// 	const functionPattern = /(tan|sin|cos|ta|co|si)(?!\s*\()/i;
+
+// 	// Check for invalid standalone variables (anything other than 'x')
+// 	if (variablePattern.test(expression)) {
+// 		return false;
+// 	}
+
+// 	// Check for invalid function usage (partial or full function names without a following '(')
+// 	if (functionPattern.test(expression)) {
+// 		return false;
+// 	}
+
+// 	// If all checks pass, the expression is valid
+// 	return true;
+// }
+
+function isValidExpression(expression) {
+	try {
+		math.evaluate(expression, { x: 1 });
+		return true;
+	} catch (err) {
+		return false;
+	}
+}
 function App() {
-	const [xmin, setxmin] = useState("-10");
-	const [xmax, setxmax] = useState("+10");
-	const [ymin, setymin] = useState("-10");
-	const [ymax, setymax] = useState("+10");
+	const [inputXmin, setInputXmin] = useState("-10");
+	const [inputXmax, setInputXmax] = useState("+10");
+	const [inputYmin, setInputYmin] = useState("-10");
+	const [inputYmax, setInputYmax] = useState("+10");
+
+	const [xmin, setXmin] = useState("-10");
+	const [xmax, setXmax] = useState("+10");
+	const [ymin, setYmin] = useState("-10");
+	const [ymax, setYmax] = useState("+10");
+
+	const [error, setError] = useState(false);
+	const [errorMessage, setErrorMessage] = useState("");
+
+	const [inputExpr, setInputExpr] = useState("");
+	const [expr, setExpr] = useState("");
 
 	const canvasRef = useRef();
 
+	function handleInputExpression(event) {
+		const expression = event.target.value;
+
+		setInputExpr(expression);
+	}
 	function handleXmin(event) {
-		setxmin(event.target.value);
+		setInputXmin(event.target.value);
 	}
 
 	function handleXmax(event) {
-		setxmax(event.target.value);
+		setInputXmax(event.target.value);
 	}
 
 	function handleYmin(event) {
-		setymin(event.target.value);
+		setInputYmin(event.target.value);
 	}
 
 	function handleYmax(event) {
-		setymax(event.target.value);
+		setInputYmax(event.target.value);
 	}
-
+	useEffect(() => {
+		if (!inputExpr) {
+			setError(true);
+			setErrorMessage("empty expression field");
+			return;
+		}
+		if (!isValidExpression(inputExpr)) {
+			setError(true);
+			setErrorMessage("Invalid Expression");
+			return;
+		}
+		try {
+			math.compile(inputExpr);
+			setError(false);
+			setExpr(inputExpr);
+			setErrorMessage("");
+		} catch (err) {
+			setErrorMessage("invalid expr");
+			setError(true);
+		}
+	}, [inputExpr]);
+	useEffect(() => {
+		if (!inputXmin || !inputXmax || !inputYmin || !inputYmax) {
+			setError(true);
+			setErrorMessage("at least one field left empty");
+			return;
+		}
+		if (
+			isNaN(Number(inputXmin)) ||
+			isNaN(Number(inputXmax)) ||
+			isNaN(Number(inputYmin)) ||
+			isNaN(Number(inputYmax))
+		) {
+			setError(true);
+			setErrorMessage("no number");
+			return;
+		}
+		if (Number(inputXmin) > Number(inputXmax)) {
+			setError(true);
+			setErrorMessage("xmin > xmax");
+			return;
+		}
+		if (Number(inputYmin) > Number(inputYmax)) {
+			setError(true);
+			setErrorMessage("ymin > ymax");
+			return;
+		}
+		console.log("pizza");
+		setXmin(inputXmin);
+		setXmax(inputXmax);
+		setYmin(inputYmin);
+		setYmax(inputYmax);
+		setError(false);
+		setErrorMessage("");
+	}, [inputXmax, inputXmin, inputYmax, inputYmin]);
 	useEffect(() => {
 		const canvas = canvasRef.current;
-		if (!canvas) return;
+		if (!canvas || error) return;
 		const ctx = canvas.getContext("2d");
-
 		ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear before redrawing
 		console.log(typeof xmin);
 		drawAxes(ctx, xmin, xmax, ymin, ymax, 300, 500);
 		//move function plotting somewhere else once input is set up
 		const points = Array.from(
 			generatePoints(
-				"sin(x)",
-				parseInt(xmax),
+				expr,
+				parseInt(xmax), //change these to Number(parseInt)?
 				parseInt(xmin),
 				parseInt(ymax),
 				parseInt(ymin)
@@ -62,21 +160,25 @@ function App() {
 			500
 		);
 		console.log("pixpoints:", pixelPoints);
-		plotFunction(pixelPoints, ctx);
-	}, [xmin, xmax, ymin, ymax]); // Now updates when state changes
+		plotFunction(pixelPoints, 500, 300, ctx);
+	}, [xmin, xmax, ymin, ymax, expr]); // Now updates when state changes
 	return (
 		<div>
+			<input type="text" value={inputExpr} onChange={handleInputExpression} />
 			<GraphWindowInputFields
-				xmin={xmin}
-				xmax={xmax}
-				ymin={ymin}
-				ymax={ymax}
+				xmin={inputXmin}
+				xmax={inputXmax}
+				ymin={inputYmin}
+				ymax={inputYmax}
 				handleXmin={handleXmin}
 				handleXmax={handleXmax}
 				handleYmin={handleYmin}
 				handleYmax={handleYmax}
 			/>
+			<div>{errorMessage}</div>
+			<div>{JSON.stringify(error)}</div>
 			<CartesianGrid
+				expr={expr}
 				xmin={xmin}
 				xmax={xmax}
 				ymin={ymin}
