@@ -33,7 +33,7 @@ export function generatePoints(expr, xmax, xmin, ymax, ymin, res = 0.01) {
 		return [];
 	}
 
-	const maxPoints = 5000;
+	const maxPoints = 10000;
 	// res = (xmax - xmin) / 200;
 	res = Math.max(res, (xmax - xmin) / maxPoints);
 	let points = new Set([]);
