@@ -221,10 +221,19 @@ function CartesianGrid({ xmin, xmax, ymin, ymax, canvasRef }) {
 	useEffect(() => {
 		const canvas = canvasRef.current;
 		const draw = canvas.getContext("2d");
+		const dpr = window.devicePixelRatio;
+		const rect = {
+			width: 500,
+			height: 300,
+		};
+		canvas.width = rect.width * dpr;
+		canvas.height = rect.height * dpr;
+
+		draw.scale(dpr, dpr);
 		draw.lineCap = "round";
 		draw.fillStyle = "black";
 		draw.font = "18px";
-		drawAxes(draw, xmin, xmax, ymin, ymax, graphHeight, graphWidth);
+		drawAxes(draw, xmin, xmax, ymin, ymax, rect.height, rect.width);
 	}, []);
 	return (
 		<div>
@@ -280,12 +289,6 @@ function GraphWindowInputFields({
 			alert("Enter key press");
 		}
 	}
-
-	useEffect(() => {
-		setTimeout(() => {
-			console.log("banana");
-		}, 800);
-	}, []);
 
 	return (
 		<div>
