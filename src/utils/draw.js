@@ -50,6 +50,8 @@ export function generatePoints(
   const step = domain / 1000;
 
   let points = new Set([]);
+  let lastYPx = null;
+  let lastY = null;
 
   for (let i = xmin; i <= xmax; i += step) {
     let y = evaluateExpression(expr, "x", x).y; //the cartesian y coordinate
@@ -68,7 +70,16 @@ export function generatePoints(
     const yPxCoord = pxCoords.yPxCoord;
     const xPxCoord = pxCoords.xPxCoord;
 
-    points.add({ x, y });
+    if (lastY !== null && lastYPx !== null && isFinite(y)) {
+      const jump = Math.abs(yPxCoord - lastYPx);
+      if (jump > jumpThreshold) {
+        points.add({ xPxCoord, y: null });
+      }
+    }
+
+    lastY = y;
+    lastYPx = yPxCoord;
+    points.add({ xPxCoord, yPxCoord });
   }
   return points;
 }
