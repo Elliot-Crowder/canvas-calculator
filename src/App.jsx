@@ -228,6 +228,7 @@ function CartesianGrid({ xmin, xmax, ymin, ymax, canvasRef }) {
     canvas.style.outline = "2px solid green";
   }
 
+<<<<<<< HEAD
   function handleMouseOut() {
     const canvas = canvasRef.current;
     canvas.style.outline = "1px solid black";
@@ -257,6 +258,46 @@ function CartesianGrid({ xmin, xmax, ymin, ymax, canvasRef }) {
       />
     </div>
   );
+=======
+	function handleMouseOut() {
+		const canvas = canvasRef.current;
+		canvas.style.outline = "1px solid black";
+	}
+	useEffect(() => {
+		const canvas = canvasRef.current;
+		const draw = canvas.getContext("2d");
+		const dpr = window.devicePixelRatio;
+		const rect = {
+			width: 500,
+			height: 300,
+		};
+		canvas.width = rect.width * dpr;
+		canvas.height = rect.height * dpr;
+
+		draw.scale(dpr, dpr);
+		draw.lineCap = "round";
+		draw.fillStyle = "black";
+		draw.font = "18px";
+		drawAxes(draw, xmin, xmax, ymin, ymax, rect.height, rect.width);
+	}, []);
+	return (
+		<div>
+			<div>
+				<pre>{JSON.stringify([xmin, xmax, ymin, ymax])}</pre>
+			</div>
+			<canvas
+				width={graphWidth + "px"}
+				height={graphHeight + "px"}
+				className="cartesian-canvas"
+				ref={canvasRef}
+				// onMouseMove={handleMouseMove}
+				onMouseOver={handleMouseOver}
+				onMouseOut={handleMouseOut}
+				onClick={handleClick}
+			/>
+		</div>
+	);
+>>>>>>> d43699a1efc2e2d928c6ce602f85b77b65382855
 }
 
 function GraphWindowInputFields({
@@ -295,6 +336,7 @@ function GraphWindowInputFields({
     }
   }
 
+<<<<<<< HEAD
   useEffect(() => {
     setTimeout(() => {
       console.log("banana");
@@ -340,6 +382,47 @@ function GraphWindowInputFields({
             value={ymax}
           />
         </span>
+=======
+	return (
+		<div>
+			<div>
+				<span className="input-field-container">
+					<input
+						type="text"
+						placeholder="x-min"
+						value={xmin}
+						onChange={handleXmin}
+						onKeyDown={handleKeyDown}
+					/>
+				</span>
+				<span className="input-field-container">
+					<input
+						type="text"
+						placeholder="x-max"
+						value={xmax}
+						onChange={handleXmax}
+					/>
+				</span>
+				<button onClick={logXRange}>log x range</button>
+			</div>
+			<div>
+				<span className="input-field-container">
+					<input
+						type="text"
+						placeholder="y-min"
+						onChange={handleYmin}
+						value={ymin}
+					/>
+				</span>
+				<span className="input-field-container">
+					<input
+						type="text"
+						placeholder="y-max"
+						onChange={handleYmax}
+						value={ymax}
+					/>
+				</span>
+>>>>>>> d43699a1efc2e2d928c6ce602f85b77b65382855
 
         <button onClick={logYRange}>log y range</button>
       </div>
