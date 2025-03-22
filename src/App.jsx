@@ -2,12 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import * as math from "mathjs";
 import "./App.css";
 import "./cartesianStyles.css";
-import {
-  drawAxes,
-  plotFunction,
-  generatePoints,
-  mapPointsToPixels,
-} from "./utils/draw";
+import { drawAxes, plotFunction } from "./utils/draw";
+import { generatePoints } from "./utils/pointMap";
 // function isValidExpression(expression) {
 // 	const variablePattern = /(?:^|[^a-zA-Z])[a-wyz](?:$|[^a-zA-Z])/i;
 
@@ -124,7 +120,6 @@ function App() {
       setErrorMessage("ymin > ymax");
       return;
     }
-    console.log("pizza");
     setXmin(inputXmin);
     setXmax(inputXmax);
     setYmin(inputYmin);
@@ -142,40 +137,29 @@ function App() {
     canvas.width = 500 * canvasScaleFactor;
     canvas.height = 300 * canvasScaleFactor;
 
-    canvas.style.width = "500px";
+    canvas.style.width = "400px";
     canvas.style.height = "300px";
     ctx.scale(canvasScaleFactor, canvasScaleFactor);
     // Clear before redrawing
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    console.log(typeof xmin);
 
-    drawAxes(ctx, xmin, xmax, ymin, ymax, 300, 500); //draw axes
+    const baseWindowWidth = canvas.width / canvasScaleFactor;
+    const baseWindowHeight = canvas.height / canvasScaleFactor;
+    drawAxes(ctx, xmin, xmax, ymin, ymax, baseWindowWidth, baseWindowHeight); //draw axes
 
-    const points = Array.from(
-      generatePoints(
-        expr,
-        parseInt(xmax), //change these to Number(parseInt)?
-        parseInt(xmin),
-        parseInt(ymax),
-        parseInt(ymin)
-      )
+    console.log(canvas.height);
+    const points = generatePoints(
+      expr,
+      Number(xmax), //change these to Number(parseInt)?
+      Number(xmin),
+      Number(ymax),
+      Number(ymin),
+      baseWindowWidth,
+      baseWindowHeight
     );
-    console.log(points);
-    const pixelPoints = mapPointsToPixels(
-      points,
-      xmin,
-      xmax,
-      ymin,
-      ymax,
-      300,
-      500
-    );
-    // ctx.lineWidth = 1 / canvasScaleFactor;
-    // ctx.lineJoin = "round";
-    // ctx.lineCap = "round";
-    console.log("pixpoints:", pixelPoints);
-    plotFunction(pixelPoints, 500, 300, ctx);
-  }, [xmin, xmax, ymin, ymax, expr]); // Now updates when state changes
+    console.log("points:", points);
+    plotFunction(points, baseWindowWidth, baseWindowHeight, ctx); //plot function on graph
+  }, [xmin, xmax, ymin, ymax, expr]);
   return (
     <div>
       <input type="text" value={inputExpr} onChange={handleInputExpression} />
@@ -207,6 +191,8 @@ function CartesianGrid({ xmin, xmax, ymin, ymax, canvasRef }) {
   const graphWidth = 500;
   const graphHeight = 300;
 
+  const [mouseInCanvasWindow, setMouseInCanvasWindow] = useState(false);
+
   function handleClick(event) {
     const canvas = canvasRef.current;
     const draw = canvas.getContext("2d");
@@ -228,18 +214,28 @@ function CartesianGrid({ xmin, xmax, ymin, ymax, canvasRef }) {
     canvas.style.outline = "2px solid green";
   }
 
-<<<<<<< HEAD
   function handleMouseOut() {
     const canvas = canvasRef.current;
     canvas.style.outline = "1px solid black";
   }
+
+  //Use effect called on page load to generate the graph axes
   useEffect(() => {
     const canvas = canvasRef.current;
     const draw = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio;
+    const rect = {
+      width: 500,
+      height: 300,
+    };
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    draw.scale(dpr, dpr);
     draw.lineCap = "round";
     draw.fillStyle = "black";
     draw.font = "18px";
-    drawAxes(draw, xmin, xmax, ymin, ymax, graphHeight, graphWidth);
+    drawAxes(draw, xmin, xmax, ymin, ymax, rect.height, rect.width);
   }, []);
   return (
     <div>
@@ -258,46 +254,6 @@ function CartesianGrid({ xmin, xmax, ymin, ymax, canvasRef }) {
       />
     </div>
   );
-=======
-	function handleMouseOut() {
-		const canvas = canvasRef.current;
-		canvas.style.outline = "1px solid black";
-	}
-	useEffect(() => {
-		const canvas = canvasRef.current;
-		const draw = canvas.getContext("2d");
-		const dpr = window.devicePixelRatio;
-		const rect = {
-			width: 500,
-			height: 300,
-		};
-		canvas.width = rect.width * dpr;
-		canvas.height = rect.height * dpr;
-
-		draw.scale(dpr, dpr);
-		draw.lineCap = "round";
-		draw.fillStyle = "black";
-		draw.font = "18px";
-		drawAxes(draw, xmin, xmax, ymin, ymax, rect.height, rect.width);
-	}, []);
-	return (
-		<div>
-			<div>
-				<pre>{JSON.stringify([xmin, xmax, ymin, ymax])}</pre>
-			</div>
-			<canvas
-				width={graphWidth + "px"}
-				height={graphHeight + "px"}
-				className="cartesian-canvas"
-				ref={canvasRef}
-				// onMouseMove={handleMouseMove}
-				onMouseOver={handleMouseOver}
-				onMouseOut={handleMouseOut}
-				onClick={handleClick}
-			/>
-		</div>
-	);
->>>>>>> d43699a1efc2e2d928c6ce602f85b77b65382855
 }
 
 function GraphWindowInputFields({
@@ -335,13 +291,6 @@ function GraphWindowInputFields({
       alert("Enter key press");
     }
   }
-
-<<<<<<< HEAD
-  useEffect(() => {
-    setTimeout(() => {
-      console.log("banana");
-    }, 800);
-  }, []);
 
   return (
     <div>
@@ -382,47 +331,6 @@ function GraphWindowInputFields({
             value={ymax}
           />
         </span>
-=======
-	return (
-		<div>
-			<div>
-				<span className="input-field-container">
-					<input
-						type="text"
-						placeholder="x-min"
-						value={xmin}
-						onChange={handleXmin}
-						onKeyDown={handleKeyDown}
-					/>
-				</span>
-				<span className="input-field-container">
-					<input
-						type="text"
-						placeholder="x-max"
-						value={xmax}
-						onChange={handleXmax}
-					/>
-				</span>
-				<button onClick={logXRange}>log x range</button>
-			</div>
-			<div>
-				<span className="input-field-container">
-					<input
-						type="text"
-						placeholder="y-min"
-						onChange={handleYmin}
-						value={ymin}
-					/>
-				</span>
-				<span className="input-field-container">
-					<input
-						type="text"
-						placeholder="y-max"
-						onChange={handleYmax}
-						value={ymax}
-					/>
-				</span>
->>>>>>> d43699a1efc2e2d928c6ce602f85b77b65382855
 
         <button onClick={logYRange}>log y range</button>
       </div>
