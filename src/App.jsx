@@ -124,18 +124,18 @@ function App() {
 
 		const baseWindowWidth = canvas.width / canvasScaleFactor;
 		const baseWindowHeight = canvas.height / canvasScaleFactor;
-		drawAxes(ctx, xmin, xmax, ymin, ymax, baseWindowWidth, baseWindowHeight); //draw axes
 
 		console.log(canvas.height);
 		const points = generatePoints(
 			expr,
-			Number(xmax), //change these to Number(parseInt)?
+			Number(xmax),
 			Number(xmin),
 			Number(ymax),
 			Number(ymin),
 			baseWindowWidth,
 			baseWindowHeight
 		);
+		drawAxes(ctx, xmin, xmax, ymin, ymax, baseWindowWidth, baseWindowHeight); //draw axes
 		console.log("points:", points);
 		plotFunction(points, baseWindowWidth, baseWindowHeight, ctx); //plot function on graph
 	}, [xmin, xmax, ymin, ymax, expr]);
@@ -160,58 +160,83 @@ function App() {
 				xmax={xmax}
 				ymin={ymin}
 				ymax={ymax}
+				setXmax={setXmax}
+				setXmin={setXmin}
+				setYmax={setYmax}
+				setYmin={setYmin}
 				canvasRef={canvasRef}
 			/>
 		</div>
 	);
 }
 
-function CartesianGrid({ xmin, xmax, ymin, ymax, canvasRef }) {
+function CartesianGrid({
+	xmin,
+	xmax,
+	ymin,
+	ymax,
+	setXmin,
+	setXmax,
+	setYmin,
+	setYmax,
+	canvasRef,
+}) {
 	const graphWidth = 500;
 	const graphHeight = 300;
 
-	const [mouseInCanvasWindow, setMouseInCanvasWindow] = useState(false);
+	const [mouseDown, setMouseDown] = useState(false);
+	const [isPanning, setIsPanning] = useState(false);
+	const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 
-	// function handleClick(event) {
-	// 	const canvas = canvasRef.current;
-	// 	const draw = canvas.getContext("2d");
-	// 	const offsetX = event.nativeEvent.offsetX;
-	// 	const offsetY = event.nativeEvent.offsetY;
-	// 	const cursorCoord = {
-	// 		x: offsetX,
-	// 		y: offsetY,
-	// 	};
-	// 	// console.log(cursorCoord);
-	// 	draw.beginPath();
-	// 	draw.arc(cursorCoord.x, cursorCoord.y, 40, 0, 2 * Math.PI);
-	// 	draw.fillStyle = "green";
-	// 	draw.fill();
-	// }
-	useEffect(() => {
-		const el = canvasRef.current;
+	function handleMouseUp() {
+		setMouseDown(false);
+		setIsPanning(false);
+		console.log("release");
+	}
 
-		const handleWheel = (event) => {
-			event.preventDefault(); // Prevent the default scroll behavior
+	function handleMouseDown(e) {
+		setIsPanning(true);
+		setMouseDown(true);
+		setStartPos({ x: e.clientX, y: e.clientY });
+		console.log("down");
+	}
 
-			if (event.ctrlKey) {
-				console.log(event.deltaY < 0 ? "Zooming in" : "Zooming out");
-			} else {
-				console.log(
-					event.deltaY < 0 ? "Scroll up (custom)" : "Scroll down (custom)"
-				);
-			}
-		};
+	function handleMouseOver() {
+		console.log("mouse in");
+	}
 
-		// Attach the non-passive event listener
-		if (el) {
-			el.addEventListener("wheel", handleWheel, { passive: false });
+	function handleMouseOut() {
+		setIsPanning(false);
+		setMouseDown(false);
+		console.log("mouse out");
+	}
+	// const preventDefaultBehavior = (e) => {
+	// 	e.preventDefault();
+	// };
+
+	const sensitivity = 0.05;
+	function handleMouseMove(e) {
+		if (!isPanning) {
+			//if the user is not panning, ie the m1 is not down or the mouse is outside the canvas, we return
+			return;
 		}
 
-		// Cleanup the event listener on unmount
-		return () => {
-			if (el) el.removeEventListener("wheel", handleWheel);
-		};
-	}, []);
+		const deltaX = e.clientX - startPos.x;
+		const deltaY = e.clientY - startPos.y;
+		console.log(deltaX, deltaY);
+
+		const newXMin = xmin - deltaX * sensitivity;
+		const newXMax = xmax - deltaX * sensitivity;
+		const newYMin = ymin + deltaY * sensitivity; //FIX VERTICAL PANNING
+		const newYMax = ymax + deltaY * sensitivity;
+
+		setXmin(newXMin);
+		setXmax(newXMax);
+		setYmin(newYMin);
+		setYmax(newYMax);
+		setStartPos({ x: e.clientX, y: e.clientY });
+		// preventDefaultBehavior(e);
+	}
 
 	//Use effect called on page load to generate the graph axes
 	useEffect(() => {
@@ -233,20 +258,17 @@ function CartesianGrid({ xmin, xmax, ymin, ymax, canvasRef }) {
 	}, []);
 	return (
 		<div>
-			<div>
-				<pre>{JSON.stringify([xmin, xmax, ymin, ymax])}</pre>
-			</div>
+			<div>{/* <pre>{JSON.stringify([xmin, xmax, ymin, ymax])}</pre> */}</div>
 			<canvas
 				width={graphWidth + "px"}
 				height={graphHeight + "px"}
 				className="cartesian-canvas"
 				ref={canvasRef}
-				// onWheel={handleMouseWheel}
-				// onMouseMove={handleMouseMove}
-
-				// onMouseOver={handleMouseOver}
-				// onMouseOut={handleMouseOut}
-				// onClick={handleClick}
+				onMouseDown={handleMouseDown}
+				onMouseUp={handleMouseUp}
+				onMouseOver={handleMouseOver}
+				onMouseOut={handleMouseOut}
+				onMouseMove={handleMouseMove}
 			/>
 		</div>
 	);
@@ -264,22 +286,6 @@ function GraphWindowInputFields({
 }) {
 	// const yMinRef = useRef();
 	// const yMaxRef = useRef();
-
-	function logXRange() {
-		const xRange = {
-			xmin: xmin,
-			xmax: xmax,
-		};
-		console.log(xRange);
-	}
-
-	function logYRange() {
-		const yRange = {
-			ymin: ymin,
-			ymax: ymax,
-		};
-		console.dir(yRange);
-	}
 
 	function handleKeyDown(event) {
 		console.log(event.key);
@@ -308,7 +314,6 @@ function GraphWindowInputFields({
 						onChange={handleXmax}
 					/>
 				</span>
-				<button onClick={logXRange}>log x range</button>
 			</div>
 			<div>
 				<span className="input-field-container">
@@ -327,8 +332,6 @@ function GraphWindowInputFields({
 						value={ymax}
 					/>
 				</span>
-
-				<button onClick={logYRange}>log y range</button>
 			</div>
 		</div>
 	);

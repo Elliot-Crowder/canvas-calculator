@@ -41,10 +41,10 @@ export function drawAxes(
 	//get origin points in pixel form
 	const pxPoint = mapPointToPixels(
 		{ x: 0, y: 0 },
-		parseInt(xmin),
-		parseInt(xmax),
-		parseInt(ymin),
-		parseInt(ymax),
+		Number(xmin),
+		Number(xmax),
+		Number(ymin),
+		Number(ymax),
 		canvasHeight,
 		canvasWidth
 	);
